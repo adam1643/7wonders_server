@@ -66,6 +66,7 @@ class AllCards:
         card = self.get_card_by_id(index)
         costs = []
         for c in card.cost:
+            print(c)
             if c == r.WOOD:
                 costs.append('wood')
             elif c == r.STONE:
@@ -80,4 +81,6 @@ class AllCards:
                 costs.append('glass')
             elif c == g.TEXTILE:
                 costs.append('textile')
+            else:
+                costs.append('money')
         return costs

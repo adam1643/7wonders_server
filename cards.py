@@ -77,8 +77,8 @@ red_cards_2 = [
 ]
 
 yellow_cards_2 = [
-    YellowCard(251, 'Karawanseraj', perks=[[Perk.PRODUCTION, ProductionType.RESOURCES]], prev_free=[153], next_free=[351]),
-    YellowCard(252, 'Rynek', perks=[[Perk.PRODUCTION, ProductionType.GOODS]], prev_free=[151, 152], next_free=[352]),
+    YellowCard(251, 'Karawanseraj', cost=[r.WOOD, r.WOOD], perks=[[Perk.PRODUCTION, ProductionType.RESOURCES]], prev_free=[153], next_free=[351]),
+    YellowCard(252, 'Rynek', cost=[r.BRICK, r.BRICK], perks=[[Perk.PRODUCTION, ProductionType.GOODS]], prev_free=[151, 152], next_free=[352]),
     YellowCard(253, 'Winnica', perks=[[Perk.MONEY, 1, CardColor.BROWN, Neighborhood.ALL_THREE]])
 ]
 

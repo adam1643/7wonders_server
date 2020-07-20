@@ -38,7 +38,7 @@ class Game:
         self.discarded = []
 
         for index, player in enumerate(self.players):
-            player.set_cards(self.deck1.splits[index], [], self.age)
+            player.set_cards(self.deck2.splits[index], [], self.age)
             player.wonder = wonders[index]
 
     def get_player(self, name):
@@ -89,11 +89,33 @@ class Game:
             player.state = 0
             player.move_available = True
 
-    def build(self, player, building):
-        for card in player.available_cards:
-            if card.id == building:
-                player.available_cards.remove(card)
-                print("Removed card!")
+    def prepare_for_build(self, player, building, chosen, discard):
+        player.ready_to_built = building
+        player.chosen_to_build = chosen if str(chosen) != 'a' else ['none' for _ in all_cards.get_card_by_id(building).cost]
+        player.discarding = discard
+
+    def build(self):
+        for p in self.players:
+            delta = p.money
+            for card in p.available_cards:
+                if card.id == p.ready_to_built:
+                    p.available_cards.remove(card)
+                    if p.discarding is True:
+                        p.money += 3
+                        p.last_built = -1
+                        p.delta = p.money - delta
+                        p.ready_to_built = None
+                        continue
+                    print("CHOSEM", card.cost, p.chosen_to_build)
+                    for cost, ch in zip(card.cost, p.chosen_to_build):
+                        if ch == 'left':
+                            p.buy_from_left(cost)
+                        if ch == 'right':
+                            p.buy_from_right(cost)
+                    print("Removed card!")
+                    p.last_built = p.ready_to_built
+                    p.delta = p.money - delta
+                    p.ready_to_built = None
 
     def get_card_status(self, index):
         for p in self.players:
@@ -119,8 +141,47 @@ class Game:
             elif c in available_goods:
                 res[idx] = 'own'
                 available_goods.remove(c)
-            else:
-                pass
+            elif c not in r and c not in g:
+                if player.money >= 0:
+                    res[idx] = 'own'
+
+        left = player.left_neighbor.available_resources()
+        right = player.right_neighbor.available_resources()
+        for idx, c in enumerate(card.cost):
+            if res[idx] != 'none':
+                continue
+            if c in left and c in right:
+                res[idx] = 'both'
+            if c in left:
+                res[idx] = 'left'
+            if c in right:
+                res[idx] = 'right'
+
+        left = player.left_neighbor.available_goods()
+        right = player.right_neighbor.available_goods()
+        for idx, c in enumerate(card.cost):
+            if res[idx] != 'none':
+                continue
+            if c in left and c in right:
+                res[idx] = 'both'
+            if c in left:
+                res[idx] = 'left'
+            if c in right:
+                res[idx] = 'right'
+
+        return res
+
+    def get_player_neighbor_money(self, player):
+        return [player.left_neighbor.money, player.money, player.right_neighbor.money]
+
+    def get_player_neighbor_military(self, player):
+        return [player.military_points, player.left_neighbor.military_points, player.right_neighbor.military_points]
+
+    def get_player_neighbor_wins(self, player):
+        return [player.military_wins, player.left_neighbor.military_wins, player.right_neighbor.military_wins]
+
+    def get_player_neighbor_loses(self, player):
+        return [player.military_loses, player.left_neighbor.military_loses, player.right_neighbor.military_loses]
 
 
 # deck = Deck()

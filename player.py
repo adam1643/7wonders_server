@@ -34,6 +34,12 @@ class Player:
         self.update_available = True
         self.move_available = False
 
+        self.ready_to_built = None
+        self.chosen_to_build = None
+        self.last_built = None
+        self.discarding = False
+        self.delta = 0
+
     def set_neighbors(self, left, right):
         self.left_neighbor = left
         self.right_neighbor = right
@@ -47,6 +53,46 @@ class Player:
 
     def end_age(self, age):
         pass
+
+    def buy_from_left(self, res):
+        if res in r:
+            for perk in self.active_perks:
+                if perk[0] == Perk.DISCOUNT and perk[1] == ProductionType.RESOURCES and perk[2] == Neighborhood.LEFT:
+                    self.money -= 1
+                    self.left_neighbor.money += 1
+                    return
+            self.money -= 2
+            self.left_neighbor.money += 2
+            return
+        if res in g:
+            for perk in self.active_perks:
+                if perk[0] == Perk.DISCOUNT and perk[1] == ProductionType.GOODS and perk[2] == Neighborhood.BOTH:
+                    self.money -= 1
+                    self.left_neighbor.money += 1
+                    return
+            self.money -= 2
+            self.left_neighbor.money += 2
+            return
+
+    def buy_from_right(self, res):
+        if res in r:
+            for perk in self.active_perks:
+                if perk[0] == Perk.DISCOUNT and perk[1] == ProductionType.RESOURCES and perk[2] == Neighborhood.RIGHT:
+                    self.money -= 1
+                    self.right_neighbor.money += 1
+                    return
+            self.money -= 2
+            self.right_neighbor.money += 2
+            return
+        if res in g:
+            for perk in self.active_perks:
+                if perk[0] == Perk.DISCOUNT and perk[1] == ProductionType.GOODS and perk[2] == Neighborhood.BOTH:
+                    self.money -= 1
+                    self.right_neighbor.money += 1
+                    return
+            self.money -= 2
+            self.right_neighbor.money += 2
+            return
 
     def trade_available(self, neighbor, resource):
         if resource.__class__ == Resource:
@@ -207,6 +253,9 @@ class Player:
     def build(self, card):
 
         self.built_cards.append(card)
+
+        if 1 in card.cost:
+            self.money -= 1
 
         if card.color == CardColor.RED:
             self.calulate_military()
