@@ -40,6 +40,7 @@ async def handle_client(reader, writer):
                             'update': player.update_available,
                             'players_ready': game.get_ready_players(), 'move_ready': player.move_available,
                             'queue': 0,
+                            'player_waiting': True if player.ready_to_built is not None else False,
                             'left_waiting': True if player.left_neighbor.ready_to_built is not None else False,
                             'right_waiting': True if player.right_neighbor.ready_to_built is not None else False}
             elif message_type == 'get_data':
@@ -55,12 +56,12 @@ async def handle_client(reader, writer):
                             'age': game.age, 'round': game.round}
                 player.update_available = False
             elif message_type == 'first_get_data':
-                response = {'id': player_id, 'type': 'get_data',
+                response = {'id': player_id, 'type': 'first_get_data',
                             'state': player.state,
                             'cards': [card.id for card in player.available_cards],
-                            'built_cards': [],
-                            'left_built_cards': [],
-                            'right_built_cards': [],
+                            'built_cards': [card.id for card in player.built_cards],
+                            'left_built_cards': [card.id for card in player.left_neighbor.built_cards],
+                            'right_built_cards': [card.id for card in player.right_neighbor.built_cards],
                             'wonder': player.wonder.id,
                             'left_neighbor': [player.left_neighbor.wonder.id, len(player.left_neighbor.available_cards),
                                               player.left_neighbor.state],
@@ -81,12 +82,15 @@ async def handle_client(reader, writer):
                 player.move_available = False
                 game.update_emitted_move(player)
             elif message_type == 'build':
-                success = True
-                player.state = 1
-                building = data.get('building')
-                chosen = data.get('chosen')
-                discard = data.get('discard')
-                game.prepare_for_build(player, building, chosen, discard)
+                if player.state != 1:
+                    success = True
+                    player.state = 1
+                    building = data.get('building')
+                    chosen = data.get('chosen')
+                    discard = data.get('discard')
+                    game.prepare_for_build(player, building, chosen, discard)
+                else:
+                    success = True
 
                 response = {'id': player_id, 'type': 'build', 'status': success}
                 if game.get_ready_players() == 3:
@@ -101,7 +105,15 @@ async def handle_client(reader, writer):
                     response = {'id': player_id, 'type': 'card_details',
                                 'resources_needed': all.get_card_cost(card_id),
                                 'resources_available': game.check_player_resources(player, card_id),
+                                'upgrade': game.check_upgrade(player, card_id),
                                 'status': game.get_card_status(card_id)}
+            elif message_type == 'wonder_details':
+                wonder_id = data.get('wonder_id')
+
+                response = {'id': player_id, 'type': 'wonder_details',
+                            'stage': player.built_wonders,
+                            'resources_needed': player.get_next_wonder_cost(),
+                            'resources_available': game.check_player_resources(player, 0, wonder=True)}
             else:
                 response = {'id': player_id, 'error': 'Invalid message'}
 

@@ -11,6 +11,7 @@ class Player:
         self.discarded_cards = []
 
         self.blue_vp = 0
+        self.perks_vp = 0
         self.military_points = 0
 
         self.total_vp = 0
@@ -162,12 +163,43 @@ class Player:
             if card.color == CardColor.RED:
                 self.military_points += card.combat_value
 
+        return self.military_points
+
     def calculate_blue_vp(self):
         self.blue_vp = 0
 
         for card in self.built_cards:
             if card.color == CardColor.BLUE:
                 self.blue_vp += card.vp
+
+    def calculate_perks_vp(self):
+        vp = 0
+        player = lambda color: sum([1 if card.color == color else 0 for card in self.built_cards])
+        left = lambda color: sum([1 if card.color == color else 0 for card in self.left_neighbor.built_cards])
+        right = lambda color: sum([1 if card.color == color else 0 for card in self.right_neighbor.built_cards])
+        for perk in self.active_perks:
+            if perk[0] == Perk.VP:
+                amount = perk[1]
+                giver = perk[2]
+                owner = perk[3]
+
+                if giver == CardColor.WONDER:
+                    vp += amount * self.built_wonders if owner in [Neighborhood.ALL_THREE or Neighborhood.ONLY_ONE] else 0
+                    vp += amount * self.left_neighbor.built_wonders if owner in [Neighborhood.LEFT, Neighborhood.BOTH, Neighborhood.ALL_THREE] else 0
+                    vp += amount * self.right_neighbor.built_wonders if owner in [Neighborhood.RIGHT, Neighborhood.BOTH, Neighborhood.ALL_THREE] else 0
+                    continue
+                if giver == CardColor.LOST_VP:
+                    vp += amount * self.military_loses if owner in [Neighborhood.ALL_THREE or Neighborhood.ONLY_ONE] else 0
+                    vp += amount * self.left_neighbor.military_loses if owner in [Neighborhood.LEFT, Neighborhood.BOTH, Neighborhood.ALL_THREE] else 0
+                    vp += amount * self.right_neighbor.military_loses if owner in [Neighborhood.RIGHT, Neighborhood.BOTH, Neighborhood.ALL_THREE] else 0
+                    continue
+
+                vp += amount * left(giver) if owner in [Neighborhood.LEFT, Neighborhood.BOTH, Neighborhood.ALL_THREE] else 0
+                vp += amount * right(giver) if owner in [Neighborhood.RIGHT, Neighborhood.BOTH, Neighborhood.ALL_THREE] else 0
+                vp += amount * player(giver) if owner in [Neighborhood.ALL_THREE or Neighborhood.ONLY_ONE] else 0
+
+        self.perks_vp = vp
+        return vp
 
     def activate_perks(self, perks):
         try:
@@ -183,13 +215,15 @@ class Player:
             if perk[0] == Perk.MONEY:
                 if len(perk) == 2:
                     self.money += perk[1]
-                else:
-                    color = perk[2]
-                    if perk[3] == Neighborhood.ALL_THREE:
-                        self.money += self.get_built_by_color(color)
-                        self.money += self.left_neighbor.get_built_by_color(color)
-                        self.money += self.right_neighbor.get_buily_by_color(color)
-                    # TODO: implement for other types
+                    to_remove.append(perk)
+                    continue
+
+                color = perk[2]
+                if perk[3] == Neighborhood.ALL_THREE:
+                    self.money += self.get_built_by_color(color)
+                    self.money += self.left_neighbor.get_built_by_color(color)
+                    self.money += self.right_neighbor.get_buily_by_color(color)
+                # TODO: implement for other types
                 to_remove.append(perk)
 
             if perk[0] == Perk.FREE_DISCARDED:
@@ -273,6 +307,30 @@ class Player:
         if self.built_wonders == self.wonder.max_level:
             return
 
-        self.built_wonders += 1
         perks = self.wonder.perks[self.built_wonders]
+        self.built_wonders += 1
         self.activate_perks(perks)
+
+    def get_next_wonder_cost(self):
+        if self.built_wonders == self.wonder.max_level:
+            return []
+
+        costs = []
+        for c in self.wonder.costs[self.built_wonders]:
+            if c == r.WOOD:
+                costs.append('wood')
+            elif c == r.STONE:
+                costs.append('stone')
+            elif c == r.BRICK:
+                costs.append('brick')
+            elif c == r.GOLD:
+                costs.append('gold')
+            elif c == g.PAPYRUS:
+                costs.append('papyrus')
+            elif c == g.GLASS:
+                costs.append('glass')
+            elif c == g.TEXTILE:
+                costs.append('textile')
+            else:
+                costs.append('money')
+        return costs

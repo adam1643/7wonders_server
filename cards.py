@@ -23,8 +23,8 @@ grey_cards_1 = [
 ]
 
 blue_cards_1 = [
-    BlueCard(131, 'Ołtarz', 2, next_free=231),
-    BlueCard(132, 'Teatr', 2, next_free=232),
+    BlueCard(131, 'Ołtarz', 2, next_free=[231]),
+    BlueCard(132, 'Teatr', 2, next_free=[232]),
     BlueCard(133, 'Termy', 3, cost=[r.STONE], next_free=[233])
 ]
 

@@ -37,6 +37,15 @@ class Game:
 
         self.discarded = []
 
+        for p in self.players:
+            p.discarded_cards = self.discarded
+
+        self.players[1].built_cards.extend([all_cards.get_card_by_id(141), all_cards.get_card_by_id(211), all_cards.get_card_by_id(212), all_cards.get_card_by_id(213), all_cards.get_card_by_id(214)])
+        self.players[2].built_cards.extend([all_cards.get_card_by_id(142), all_cards.get_card_by_id(211), all_cards.get_card_by_id(212), all_cards.get_card_by_id(213), all_cards.get_card_by_id(214)])
+
+        self.players[0].built_cards.extend([all_cards.get_card_by_id(161), all_cards.get_card_by_id(162), all_cards.get_card_by_id(163)])
+        self.players[0].build(all_cards.get_card_by_id(251))
+
         for index, player in enumerate(self.players):
             player.set_cards(self.deck2.splits[index], [], self.age)
             player.wonder = wonders[index]
@@ -101,6 +110,7 @@ class Game:
                 if card.id == p.ready_to_built:
                     p.available_cards.remove(card)
                     if p.discarding is True:
+                        self.discarded.append(card)
                         p.money += 3
                         p.last_built = -1
                         p.delta = p.money - delta
@@ -127,14 +137,25 @@ class Game:
                 return 'available'
         return 'none'
 
-    def check_player_resources(self, player, index):
-        card = all_cards.get_card_by_id(index)
-        res = ['none' for _ in card.cost]
+    def check_upgrade(self, player, index):
+        for card in self.players[0].built_cards:
+            for free in card.next_free:
+                if free == index:
+                    return True
+        return False
+
+    def check_player_resources(self, player, index, wonder=False):
+        if wonder is False:
+            card = all_cards.get_card_by_id(index)
+            cost = card.cost
+        else:
+            cost = player.get_next_wonder_cost()
+        res = ['none' for _ in cost]
 
         availables_res = player.available_resources()
         available_goods = player.available_goods()
 
-        for idx, c in enumerate(card.cost):
+        for idx, c in enumerate(cost):
             if c in availables_res:
                 res[idx] = 'own'
                 availables_res.remove(c)
@@ -147,27 +168,51 @@ class Game:
 
         left = player.left_neighbor.available_resources()
         right = player.right_neighbor.available_resources()
-        for idx, c in enumerate(card.cost):
+        for idx, c in enumerate(cost):
             if res[idx] != 'none':
                 continue
             if c in left and c in right:
                 res[idx] = 'both'
-            if c in left:
+            elif c in left:
                 res[idx] = 'left'
-            if c in right:
+            elif c in right:
                 res[idx] = 'right'
 
         left = player.left_neighbor.available_goods()
         right = player.right_neighbor.available_goods()
-        for idx, c in enumerate(card.cost):
+        for idx, c in enumerate(cost):
             if res[idx] != 'none':
                 continue
             if c in left and c in right:
                 res[idx] = 'both'
-            if c in left:
+            elif c in left:
                 res[idx] = 'left'
-            if c in right:
+            elif c in right:
                 res[idx] = 'right'
+
+        for idx, c in enumerate(cost):
+            print("CHECK perks")
+            in_perks = False
+            if c in Resource:
+                print("In perks")
+                for perk in player.active_perks:
+                    print("Res perks")
+                    if perk[0] == Perk.PRODUCTION and perk[1] == ProductionType.RESOURCES:
+                        in_perks = True
+            if c in Good:
+                for perk in player.active_perks:
+                    if perk[0] == Perk.PRODUCTION and perk[1] == ProductionType.GOODS:
+                        in_perks = True
+
+            if in_perks is True:
+                if res[idx] == 'none':
+                    res[idx] = 'own'
+                if res[idx] == 'left':
+                    res[idx] = 'left_own'
+                if res[idx] == 'right':
+                    res[idx] = 'right_own'
+                if res[idx] == 'both':
+                    res[idx] = 'all'
 
         return res
 
@@ -175,7 +220,7 @@ class Game:
         return [player.left_neighbor.money, player.money, player.right_neighbor.money]
 
     def get_player_neighbor_military(self, player):
-        return [player.military_points, player.left_neighbor.military_points, player.right_neighbor.military_points]
+        return [player.calulate_military(), player.left_neighbor.calulate_military(), player.right_neighbor.calulate_military()]
 
     def get_player_neighbor_wins(self, player):
         return [player.military_wins, player.left_neighbor.military_wins, player.right_neighbor.military_wins]
