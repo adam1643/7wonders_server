@@ -18,6 +18,7 @@ class Player:
 
         self.military_wins = 0
         self.military_loses = 0
+        self.last_battle = [0, 0]
 
         self.money = 3
 
@@ -34,6 +35,7 @@ class Player:
         self.state = 0
         self.update_available = True
         self.move_available = False
+        self.end_age = False
 
         self.ready_to_built = None
         self.chosen_to_build = None
@@ -51,9 +53,6 @@ class Player:
 
         self.age = age
         self.round = 8 - (len(cards))
-
-    def end_age(self, age):
-        pass
 
     def buy_from_left(self, res):
         if res in r:

@@ -16,6 +16,7 @@ class Game:
         self.players[0].set_neighbors(self.players[1], self.players[2])
         self.players[1].set_neighbors(self.players[2], self.players[0])
         self.players[2].set_neighbors(self.players[0], self.players[1])
+        self.military_points = [1, 3, 5]
 
         self.deck1 = DeckAge1()
         print(self.deck1.splits[0])
@@ -89,6 +90,37 @@ class Game:
         self.players[2].set_cards(next_round_cards[0], [], self.age)
 
         self.round += 1
+        if self.round == 3:
+            self.make_battle()
+            for p in self.players:
+                p.end_age = True
+            self.start_next_age()
+
+    def start_next_age(self):
+        self.age += 1
+        self.round = 1
+        for index, player in enumerate(self.players):
+            player.set_cards(self.deck3.splits[index], [], self.age)
+
+    def make_battle(self):
+        for p in self.players:
+            if p.calulate_military() > p.left_neighbor.calulate_military():
+                p.military_wins += self.military_points[self.age - 1]
+                p.last_battle[0] = 1
+            elif p.calulate_military() < p.left_neighbor.calulate_military():
+                p.military_loses += 1
+                p.last_battle[0] = -1
+            else:
+                p.last_battle[0] = 0
+
+            if p.calulate_military() > p.right_neighbor.calulate_military():
+                p.military_wins += self.military_points[self.age - 1]
+                p.last_battle[1] = 1
+            elif p.calulate_military() < p.right_neighbor.calulate_military():
+                p.military_loses += 1
+                p.last_battle[1] = -1
+            else:
+                p.last_battle[1] = 0
 
     def make_move(self):
         # TODO: Handle move when all players are ready
