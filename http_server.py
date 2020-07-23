@@ -65,7 +65,7 @@ def handle_client_data(player, data):
                     'update': player.update_available,
                     'players_ready': game.get_ready_players(), 'move_ready': player.move_available,
                     'queue': 0,
-                    'end_age': game.end_age,
+                    'end_age': player.end_age,
                     'player_waiting': True if player.ready_to_built is not None else False,
                     'left_waiting': True if player.left_neighbor.ready_to_built is not None else False,
                     'right_waiting': True if player.right_neighbor.ready_to_built is not None else False}
