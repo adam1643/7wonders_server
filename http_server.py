@@ -107,17 +107,33 @@ def handle_client_data(player, data):
                     'player_built': player.last_built,
                     'left_neighbor_built': player.left_neighbor.last_built,
                     'right_neighbor_built': player.right_neighbor.last_built,
-                    'player_money_delta': player.delta}
+                    'money': [player.left_neighbor.money, player.money, player.right_neighbor.money],
+                    'military': [player.left_neighbor.calulate_military(), player.calulate_military(), player.right_neighbor.calulate_military()],
+                    'wins': [player.left_neighbor.military_wins, player.military_wins, player.right_neighbor.military_wins],
+                    'loses': [player.left_neighbor.military_loses, player.military_loses, player.right_neighbor.military_loses]}
         player.move_available = False
         game.update_emitted_move(player)
     elif message_type == 'build':
         if player.state != 1:
-            success = True
-            player.state = 1
             building = data.get('building')
             chosen = data.get('chosen')
             discard = data.get('discard')
-            game.prepare_for_build(player, building, chosen, discard)
+
+            if building == 1:
+                if player.can_build_wonder(chosen):
+                    success = True
+                else:
+                    success = False
+            elif player.can_build_with_promotion(all.get_card_by_id(building)):
+                success = True
+                player.state = 1
+                game.prepare_for_build(player, building, chosen, discard)
+            elif player.can_build(all.get_card_by_id(building), chosen):
+                success = True
+                player.state = 1
+                game.prepare_for_build(player, building, chosen, discard)
+            else:
+                success = False
         else:
             success = True
 
@@ -136,6 +152,9 @@ def handle_client_data(player, data):
                         'resources_available': game.check_player_resources(player, card_id),
                         'upgrade': game.check_upgrade(player, card_id),
                         'status': game.get_card_status(card_id)}
+    elif message_type == 'get_discarded':
+        response = {'id': player_id, 'type': 'get_discarded',
+                    'discarded': [card.id for card in game.discarded]}
     elif message_type == 'wonder_details':
         wonder_id = data.get('wonder_id')
 
@@ -149,6 +168,17 @@ def handle_client_data(player, data):
                     'player_battle': player.last_battle,
                     'left_battle': player.left_neighbor.last_battle,
                     'right_battle': player.right_neighbor.last_battle}
+    elif message_type == 'end_game':
+        # player.end_game = False
+        response = {'id': player_id, 'type': 'end_game',
+                    'players': [player.name, player.left_neighbor.name, player.right_neighbor.name],
+                    'battles': player.military_wins - player.military_loses,
+                    'money': player.money // 3,
+                    'blue': player.calculate_blue_vp(),
+                    'wonder': player.calculate_wonder_vp(),
+                    'yellow': player.calculate_yellow_vp(),
+                    'green': player.calculate_green_vp(),
+                    'purple': player.calculate_purple_vp()}
     else:
         response = {'id': player_id, 'error': 'Invalid message'}
     return json.dumps(response)

@@ -132,12 +132,24 @@ class Game:
 
     def prepare_for_build(self, player, building, chosen, discard):
         player.ready_to_built = building
-        player.chosen_to_build = chosen if str(chosen) != 'a' else ['none' for _ in all_cards.get_card_by_id(building).cost]
+        if building == 1:
+            player.chosen_to_build = chosen if str(chosen) != 'a' else ['none' for _ in player.get_next_wonder_cost()]
+        else:
+            player.chosen_to_build = chosen if str(chosen) != 'a' else ['none' for _ in all_cards.get_card_by_id(building).cost]
         player.discarding = discard
 
     def build(self):
         for p in self.players:
-            delta = p.money
+            if p.ready_to_built == 1:
+                for cost, ch in zip(p.get_next_wonder_cost(), p.chosen_to_build):
+                    if ch == 'left':
+                        p.buy_from_left(cost)
+                    if ch == 'right':
+                        p.buy_from_right(cost)
+                p.last_built = p.ready_to_built
+                p.build_wonder()
+                p.ready_to_built = None
+
             for card in p.available_cards:
                 if card.id == p.ready_to_built:
                     p.available_cards.remove(card)
@@ -145,7 +157,6 @@ class Game:
                         self.discarded.append(card)
                         p.money += 3
                         p.last_built = -1
-                        p.delta = p.money - delta
                         p.ready_to_built = None
                         continue
                     print("CHOSEM", card.cost, p.chosen_to_build)
@@ -156,7 +167,6 @@ class Game:
                             p.buy_from_right(cost)
                     print("Removed card!")
                     p.last_built = p.ready_to_built
-                    p.delta = p.money - delta
                     p.ready_to_built = None
 
     def get_card_status(self, index):
@@ -170,7 +180,7 @@ class Game:
         return 'none'
 
     def check_upgrade(self, player, index):
-        for card in self.players[0].built_cards:
+        for card in player.built_cards:
             for free in card.next_free:
                 if free == index:
                     return True
@@ -238,7 +248,7 @@ class Game:
 
             if in_perks is True:
                 if res[idx] == 'none':
-                    res[idx] = 'own'
+                    res[idx] = 'down'
                 if res[idx] == 'left':
                     res[idx] = 'left_own'
                 if res[idx] == 'right':

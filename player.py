@@ -236,7 +236,7 @@ class Player:
 
     def can_build_with_promotion(self, card_to_build):
         for card in self.built_cards:
-            if card_to_build.prev_free.any() == card.id:
+            if card.id in card_to_build.prev_free:
                 return True
         return False
 
@@ -282,6 +282,99 @@ class Player:
         if len(res) == 0:
             return True
         return False
+
+    def can_build(self, card, chosen, wonder=False):
+        if wonder is True:
+            cost = self.get_next_wonder_cost()
+        else:
+            cost = card.cost
+        money = self.money
+        left_res, left_goods = self.left_neighbor.available_resources(), self.left_neighbor.available_goods()
+        right_res, right_goods = self.right_neighbor.available_resources(), self.right_neighbor.available_goods()
+        left_res_discount, left_goods_discount = False, False
+        right_res_discount, right_goods_discount = False, False
+        for perk in self.active_perks:
+            if perk[0] == Perk.DISCOUNT:
+                if perk[1] == ProductionType.RESOURCES:
+                    if perk[2] in [Neighborhood.LEFT, Neighborhood.BOTH]:
+                        left_res_discount = True
+                    if perk[2] in [Neighborhood.RIGHT, Neighborhood.BOTH]:
+                        right_res_discount = True
+
+                if perk[1] == ProductionType.GOODS:
+                    if perk[2] in [Neighborhood.LEFT, Neighborhood.BOTH]:
+                        left_goods_discount = True
+                    if perk[2] in [Neighborhood.RIGHT, Neighborhood.BOTH]:
+                        right_goods_discount = True
+
+        res_perks, goods_perks = 0, 0
+        for perk in self.active_perks:
+            if perk[0] == Perk.PRODUCTION:
+                if perk[1] == ProductionType.RESOURCES:
+                    res_perks += 1
+
+                if perk[1] == ProductionType.GOODS:
+                    goods_perks += 1
+
+        for c, ch in cost, chosen:
+            if ch == 'none':
+                return False
+            if ch == 'own':
+                continue
+            if ch == 'down':
+                if c in r and res_perks > 0:
+                    res_perks -= 1
+                    continue
+                if c in g and goods_perks > 0:
+                    goods_perks -= 1
+                    continue
+            if ch == 'left':
+                if c in left_res:
+                    if left_res_discount and money >= 1:
+                        left_res.remove(c)
+                        money -= 1
+                    elif money >= 2:
+                        left_res.remove(c)
+                        money -= 2
+                    else:
+                        return False
+                elif c in left_goods:
+                    if left_goods_discount and money >= 1:
+                        left_goods.remove(c)
+                        money -= 1
+                    elif money >= 2:
+                        left_goods.remove(c)
+                        money -= 2
+                    else:
+                        return False
+                else:
+                    return False
+
+            if ch == 'right':
+                if c in right_res:
+                    if right_res_discount and money >= 1:
+                        right_res.remove(c)
+                        money -= 1
+                    elif money >= 2:
+                        right_res.remove(c)
+                        money -= 2
+                    else:
+                        return False
+                elif c in right_goods:
+                    if right_goods_discount and money >= 1:
+                        right_goods.remove(c)
+                        money -= 1
+                    elif money >= 2:
+                        right_goods.remove(c)
+                        money -= 2
+                    else:
+                        return False
+                else:
+                    return False
+        return True
+
+    def can_build_wonder(self, chosen):
+        self.can_build(1, chosen, wonder=True)
 
     def build(self, card):
 
