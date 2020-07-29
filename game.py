@@ -64,8 +64,18 @@ class Game:
         return ready
 
     def move_ready(self):
+        bd = False
         for player in self.players:
-            player.move_available = True
+            if player.build_discarded is True:
+                bd = True
+
+        for player in self.players:
+            if player.build_discarded is True:
+                player.move_available = True
+            elif bd is True:
+                player.move_available = False
+            else:
+                player.move_available = True
 
     def update_emitted_move(self, player):
         updated_players = 0
@@ -130,13 +140,15 @@ class Game:
             player.state = 0
             player.move_available = True
 
-    def prepare_for_build(self, player, building, chosen, discard):
-        player.ready_to_built = building
-        if building == 1:
+    def prepare_for_build(self, player, building, chosen, discard, wonder=False):
+        if wonder is True:
+            player.ready_to_built = 1
+            player.discarding = building
             player.chosen_to_build = chosen if str(chosen) != 'a' else ['none' for _ in player.get_next_wonder_cost()]
         else:
+            player.ready_to_built = building
+            player.discarding = discard
             player.chosen_to_build = chosen if str(chosen) != 'a' else ['none' for _ in all_cards.get_card_by_id(building).cost]
-        player.discarding = discard
 
     def build(self):
         for p in self.players:
@@ -148,7 +160,9 @@ class Game:
                         p.buy_from_right(cost)
                 p.last_built = p.ready_to_built
                 p.build_wonder()
+                self.discarded.append(all_cards.get_card_by_id(p.ready_to_built))
                 p.ready_to_built = None
+                continue
 
             for card in p.available_cards:
                 if card.id == p.ready_to_built:
@@ -167,6 +181,7 @@ class Game:
                             p.buy_from_right(cost)
                     print("Removed card!")
                     p.last_built = p.ready_to_built
+                    p.build(all_cards.get_card_by_id(p.ready_to_built))
                     p.ready_to_built = None
 
     def get_card_status(self, index):

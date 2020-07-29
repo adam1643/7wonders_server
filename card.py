@@ -2,7 +2,7 @@ from enums import *
 
 
 class Card:
-    def __init__(self, id_code, color, name, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, color, name, cost=None, prev_free=[], next_free=[]):
         self.id = id_code
         self.name = name
         self.color = color
@@ -20,19 +20,19 @@ class Card:
 
 
 class RedCard(Card):
-    def __init__(self, id_code, name, value, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, value, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.RED, name, cost, prev_free, next_free)
         self.combat_value = value
 
 
 class YellowCard(Card):
-    def __init__(self, id_code, name, perks=None, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, perks=None, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.YELLOW, name, cost, prev_free, next_free)
         self.perks = perks
 
 
 class BrownCard(Card):
-    def __init__(self, id_code, name, resource, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, resource, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.BROWN, name, cost, prev_free, next_free)
         self.resource = resource
 
@@ -41,25 +41,25 @@ class BrownCard(Card):
 
 
 class GreyCard(Card):
-    def __init__(self, id_code, name, good, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, good, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.GREY, name, cost, prev_free, next_free)
         self.good = good
 
 
 class BlueCard(Card):
-    def __init__(self, id_code, name, vp, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, vp, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.BLUE, name, cost, prev_free, next_free)
         self.vp = vp
 
 
 class GreenCard(Card):
-    def __init__(self, id_code, name, science_type, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, science_type, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.GREEN, name, cost, prev_free, next_free)
 
         self.science_type = science_type
 
 
 class PurpleCard(Card):
-    def __init__(self, id_code, name, perks, cost=None, prev_free=[], next_free=None):
+    def __init__(self, id_code, name, perks, cost=None, prev_free=[], next_free=[]):
         super().__init__(id_code, CardColor.PURPLE, name, cost, prev_free, next_free)
         self.perks = perks

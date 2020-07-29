@@ -42,6 +42,7 @@ class Player:
         self.last_built = None
         self.discarding = False
         self.delta = 0
+        self.build_discarded = False
 
     def set_neighbors(self, left, right):
         self.left_neighbor = left
@@ -227,7 +228,8 @@ class Player:
 
             if perk[0] == Perk.FREE_DISCARDED:
                 # TODO: implement discarded handling
-                pass
+                self.build_discarded = True
+                to_remove.append(perk)
 
             # TODO: implement other wonder perks
 

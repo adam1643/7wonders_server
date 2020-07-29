@@ -103,25 +103,41 @@ def handle_client_data(player, data):
                     'age': game.age, 'round': game.round}
         player.update_available = False
     elif message_type == 'get_move':
-        response = {'id': player_id, 'type': 'get_move',
-                    'player_built': player.last_built,
-                    'left_neighbor_built': player.left_neighbor.last_built,
-                    'right_neighbor_built': player.right_neighbor.last_built,
-                    'money': [player.left_neighbor.money, player.money, player.right_neighbor.money],
-                    'military': [player.left_neighbor.calulate_military(), player.calulate_military(), player.right_neighbor.calulate_military()],
-                    'wins': [player.left_neighbor.military_wins, player.military_wins, player.right_neighbor.military_wins],
-                    'loses': [player.left_neighbor.military_loses, player.military_loses, player.right_neighbor.military_loses]}
-        player.move_available = False
-        game.update_emitted_move(player)
+        if player.build_discarded is True:
+            player.move_available = False
+            response = {'id': player_id, 'type': 'get_move',
+                        'player_built': player.last_built,
+                        'left_neighbor_built': player.left_neighbor.last_built,
+                        'right_neighbor_built': player.right_neighbor.last_built,
+                        'money': [player.left_neighbor.money, player.money, player.right_neighbor.money],
+                        'military': [player.left_neighbor.calulate_military(), player.calulate_military(), player.right_neighbor.calulate_military()],
+                        'wins': [player.left_neighbor.military_wins, player.military_wins, player.right_neighbor.military_wins],
+                        'loses': [player.left_neighbor.military_loses, player.military_loses, player.right_neighbor.military_loses],
+                        'discarded': True}
+        else:
+            response = {'id': player_id, 'type': 'get_move',
+                        'player_built': player.last_built,
+                        'left_neighbor_built': player.left_neighbor.last_built,
+                        'right_neighbor_built': player.right_neighbor.last_built,
+                        'money': [player.left_neighbor.money, player.money, player.right_neighbor.money],
+                        'military': [player.left_neighbor.calulate_military(), player.calulate_military(), player.right_neighbor.calulate_military()],
+                        'wins': [player.left_neighbor.military_wins, player.military_wins, player.right_neighbor.military_wins],
+                        'loses': [player.left_neighbor.military_loses, player.military_loses, player.right_neighbor.military_loses],
+                        'discarded': False}
+            player.move_available = False
+            game.update_emitted_move(player)
     elif message_type == 'build':
         if player.state != 1:
             building = data.get('building')
             chosen = data.get('chosen')
             discard = data.get('discard')
+            wonder = data.get('wonder')
 
-            if building == 1:
+            if wonder is True:
                 if player.can_build_wonder(chosen):
                     success = True
+                    player.state = 1
+                    game.prepare_for_build(player, building, chosen, discard, wonder)
                 else:
                     success = False
             elif player.can_build_with_promotion(all.get_card_by_id(building)):
@@ -155,6 +171,14 @@ def handle_client_data(player, data):
     elif message_type == 'get_discarded':
         response = {'id': player_id, 'type': 'get_discarded',
                     'discarded': [card.id for card in game.discarded]}
+    elif message_type == 'build_discarded':
+        card_id = data.get('card_id')
+
+        response = {'id': player_id, 'type': 'build_discarded',
+                    'status': True}
+        player.build_discarded = False
+        player.build(all.get_card_by_id(card_id))
+        game.move_ready()
     elif message_type == 'wonder_details':
         wonder_id = data.get('wonder_id')
 
