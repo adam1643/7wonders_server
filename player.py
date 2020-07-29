@@ -318,7 +318,7 @@ class Player:
                 if perk[1] == ProductionType.GOODS:
                     goods_perks += 1
 
-        for c, ch in cost, chosen:
+        for c, ch in zip(cost, chosen):
             if ch == 'none':
                 return False
             if ch == 'own':
