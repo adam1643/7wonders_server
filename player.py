@@ -222,7 +222,7 @@ class Player:
                 if perk[3] == Neighborhood.ALL_THREE:
                     self.money += self.get_built_by_color(color)
                     self.money += self.left_neighbor.get_built_by_color(color)
-                    self.money += self.right_neighbor.get_buily_by_color(color)
+                    self.money += self.right_neighbor.get_built_by_color(color)
                 # TODO: implement for other types
                 to_remove.append(perk)
 
@@ -290,6 +290,7 @@ class Player:
             cost = self.get_next_wonder_cost()
         else:
             cost = card.cost
+        print("Chosen and cost: ", chosen, cost)
         money = self.money
         left_res, left_goods = self.left_neighbor.available_resources(), self.left_neighbor.available_goods()
         right_res, right_goods = self.right_neighbor.available_resources(), self.right_neighbor.available_goods()
