@@ -140,6 +140,10 @@ def handle_client_data(player, data):
                     game.prepare_for_build(player, building, chosen, discard, wonder)
                 else:
                     success = False
+            elif discard is True:
+                success = True
+                player.state = 1
+                game.prepare_for_build(player, building, chosen, discard, wonder)
             elif player.can_build_with_promotion(all.get_card_by_id(building)):
                 success = True
                 player.state = 1
