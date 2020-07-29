@@ -160,7 +160,7 @@ class Game:
                         p.buy_from_right(cost)
                 p.last_built = p.ready_to_built
                 p.build_wonder()
-                self.discarded.append(all_cards.get_card_by_id(p.ready_to_built))
+                self.discarded.append(all_cards.get_card_by_id(p.discarding))
                 p.ready_to_built = None
                 continue
 
